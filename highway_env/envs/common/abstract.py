@@ -162,7 +162,19 @@ class AbstractEnv(gym.Env):
         :return: is the episode truncated
         """
         raise NotImplementedError
+    
+    def _compute_error(self) -> Tuple[float, float]:
+        lon_err, lat_err = self.vehicle.lane.local_coordinates(self.vehicle.position)
+        heading_err = self.vehicle.heading - self.vehicle.lane.heading_at(lon_err)
+        return lon_err, lat_err, heading_err
 
+    def _update_debug_info(self):
+        lon_err, lat_err, heading_err = self._compute_error()    
+        self._debug_info["lat_err"] = lat_err
+        self._debug_info["s_traveled"] = lon_err
+        self._debug_info["heading_err"] = heading_err
+        self._debug_info["vehicle_speed"] = self.vehicle.speed
+        
     def _info(self, obs: Observation, action: Optional[Action] = None) -> dict:
         """
         Return a dictionary of additional information
@@ -175,6 +187,7 @@ class AbstractEnv(gym.Env):
             "speed": self.vehicle.speed,
             "crashed": self.vehicle.crashed,
             "action": action,
+            "debug_info": self._debug_info,
         }
         try:
             info["rewards"] = self._rewards(action)
@@ -205,6 +218,7 @@ class AbstractEnv(gym.Env):
         self._reset()
         self.define_spaces()  # Second, to link the obs and actions to the vehicles once the scene is created
         obs = self.observation_type.observe()
+        self._debug_info = {}
         info = self._info(obs, action=self.action_space.sample())
         if self.render_mode == "human":
             self.render()
@@ -240,6 +254,7 @@ class AbstractEnv(gym.Env):
         reward = self._reward(action)
         terminated = self._is_terminated()
         truncated = self._is_truncated()
+        self._update_debug_info()
         info = self._info(obs, action)
         if self.render_mode == "human":
             self.render()

@@ -283,6 +283,8 @@ class SineLane(StraightLane):
         )
 
     def local_coordinates(self, position: np.ndarray) -> Tuple[float, float]:
+        # get the lon and lat err compared to the start point
+        # so the lon is the distance traveled, and the lat is the deriviation with respect to the straight line
         longitudinal, lateral = super().local_coordinates(position)
         return longitudinal, lateral - self.amplitude * np.sin(
             self.pulsation * longitudinal + self.phase
@@ -357,6 +359,8 @@ class CircularLane(AbstractLane):
         return self.width
 
     def local_coordinates(self, position: np.ndarray) -> Tuple[float, float]:
+        # get the err compared to the start point (the intersection of the circle and the postive x-axis, phase = 0)
+        # the lon means the arc length from start point
         delta = position - self.center
         phi = np.arctan2(delta[1], delta[0])
         phi = self.start_phase + utils.wrap_to_pi(phi - self.start_phase)
