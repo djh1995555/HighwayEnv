@@ -163,17 +163,29 @@ class AbstractEnv(gym.Env):
         """
         raise NotImplementedError
     
-    def _compute_error(self) -> Tuple[float, float]:
-        lon_err, lat_err = self.vehicle.lane.local_coordinates(self.vehicle.position)
-        heading_err = self.vehicle.heading - self.vehicle.lane.heading_at(lon_err)
+    def _compute_error(self, position) -> Tuple[float, float]:
+        lon_err, lat_err = self.vehicle.lane.local_coordinates(position)
+        heading_err = utils.wrap_to_pi(self.vehicle.heading - self.vehicle.lane.heading_at(lon_err))
         return lon_err, lat_err, heading_err
 
     def _update_debug_info(self):
-        lon_err, lat_err, heading_err = self._compute_error()    
+        lon_err, lat_err, heading_err = self._compute_error(self.vehicle.position) 
+
+        preview_time = 0.25
+        v = self.vehicle.speed * np.array(
+            [np.cos(self.vehicle.heading), np.sin(self.vehicle.heading)]
+        )
+        preview_position = self.vehicle.position +v * preview_time
+        preview_lon_err, preview_lat_err, preview_heading_err = self._compute_error(preview_position) 
+        curvature = self.vehicle.lane.curvature_at(lon_err)  
         self._debug_info["lat_err"] = lat_err
         self._debug_info["s_traveled"] = lon_err
         self._debug_info["heading_err"] = heading_err
+        self._debug_info["preview_lat_err"] = preview_lat_err
+        self._debug_info["preview_heading_err"] = preview_heading_err
         self._debug_info["vehicle_speed"] = self.vehicle.speed
+        self._debug_info["curvature"] = curvature
+        self._debug_info["wheel_base"] = self.vehicle.get_length()
         
     def _info(self, obs: Observation, action: Optional[Action] = None) -> dict:
         """

@@ -36,22 +36,30 @@ class VehicleSimulator():
     def run(self):
         done = truncated = False
         obs, info = self._env.reset()
-        while not (done or truncated):
+        count = 0
+        control_output = {}
+        while not done and count < 320:
+            # positive -> right
             if("lat_err" in info["debug_info"]):
-                action = self._controller.compute_control_cmd(info["debug_info"]['lat_err'])
+                action = self._controller.compute_control_cmd(info["debug_info"], control_output)
             else:
                 action = [0]
+            # action = [0.1]
             obs, reward, done, truncated, info = self._env.step(action)
-            info["debug_info"]['front_angle'] = action[0]
-            self.construct_debug_info(info["debug_info"])
+            
+            self.construct_debug_info(info["debug_info"],control_output)
             self._env.render()
+            count += 1
         output_name = os.path.join(self._output_dir, "report.html")
         self.select_target_signal()
         self._report_generator.plot(self._data_selected, output_name)
 
-    def construct_debug_info(self, debug_info):
+    def construct_debug_info(self, debug_info, control_output):
         for signal_name in self._target_signals: 
-            self._debug_info[signal_name].append(debug_info[signal_name])
+            if(signal_name in debug_info):
+                self._debug_info[signal_name].append(debug_info[signal_name])
+            elif(signal_name in control_output):
+                self._debug_info[signal_name].append(control_output[signal_name])
 
     def select_target_signal(self):
         for sub_panel, list in self._simulator_config["plot_target_signal"].items():

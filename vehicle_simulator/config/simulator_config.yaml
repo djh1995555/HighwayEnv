@@ -3,7 +3,9 @@ save_data_flag: true
 
 plot_target_signal: {
   front_angle: [
-    front_angle,
+    lat_cmd,
+    feedforward,
+    feedback,
   ],
   speed: [
     vehicle_speed,
@@ -13,6 +15,9 @@ plot_target_signal: {
   ],
   heading_err: [
     heading_err,
+  ],
+  curvature: [
+    curvature,
   ],
   s: [
     s_traveled,

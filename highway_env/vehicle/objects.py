@@ -116,6 +116,9 @@ class RoadObject(ABC):
             if not other.solid:
                 other.hit = True
 
+    def get_length(self):
+        return self.LENGTH
+    
     def _is_colliding(self, other, dt):
         # Fast spherical pre-check
         if (

@@ -205,6 +205,9 @@ class StraightLane(AbstractLane):
     def heading_at(self, longitudinal: float) -> float:
         return self.heading
 
+    def curvature_at(self, longitudinal: float) -> float:
+        return 0
+    
     def width_at(self, longitudinal: float) -> float:
         return self.width
 
@@ -274,7 +277,12 @@ class SineLane(StraightLane):
             lateral
             + self.amplitude * np.sin(self.pulsation * longitudinal + self.phase),
         )
-
+    
+    def curvature_at(self, longitudinal: float) -> float:
+        first_derivation = self.pulsation * self.amplitude * np.cos(self.pulsation * longitudinal + self.phase)
+        second_derivation = - self.pulsation * self.pulsation * self.amplitude * np.sin(self.pulsation * longitudinal + self.phase)
+        return -np.abs(second_derivation) / np.power((1 + first_derivation * first_derivation), 3/2)
+    
     def heading_at(self, longitudinal: float) -> float:
         return super().heading_at(longitudinal) + np.arctan(
             self.amplitude
@@ -355,11 +363,14 @@ class CircularLane(AbstractLane):
         psi = phi + np.pi / 2 * self.direction
         return psi
 
+    def curvature_at(self, longitudinal: float) -> float:
+        return -1 / self.radius
+    
     def width_at(self, longitudinal: float) -> float:
         return self.width
 
     def local_coordinates(self, position: np.ndarray) -> Tuple[float, float]:
-        # get the err compared to the start point (the intersection of the circle and the postive x-axis, phase = 0)
+        # get the err compared to the start point (the phase of the intersection of the circle and the postive x-axis is 0)
         # the lon means the arc length from start point
         delta = position - self.center
         phi = np.arctan2(delta[1], delta[0])
@@ -426,6 +437,9 @@ class PolyLaneFixedWidth(AbstractLane):
     def heading_at(self, longitudinal: float) -> float:
         dx, dy = self.curve.get_dx_dy(longitudinal)
         return np.arctan2(dy, dx)
+
+    def curvature_at(self, longitudinal: float) -> float:
+        return 0
 
     def width_at(self, longitudinal: float) -> float:
         return self.width
