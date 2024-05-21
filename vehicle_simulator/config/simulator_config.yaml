@@ -1,5 +1,9 @@
 env_name: "racetrack-v0"
 save_data_flag: true
+control_type: "classic" # classic, rl_based
+controller_type: "pid"
+model_type: "sac"
+sac_model_filepth: "sota_model/racetrack-v0_sac/model.zip"
 
 plot_target_signal: {
   front_angle: [
